@@ -26,8 +26,8 @@ func crawl(mutex *sync.Mutex, wg *sync.WaitGroup, config Config, index int) {
 	}
 
 	// send an email if status code is 200
-	log.Printf("[%s]: %s\n", config.Sites[index].Site, response.Status)
 	if response.StatusCode != 200 {
+		log.Printf("[%s]: %s\n", config.Sites[index].Site, response.Status)
 		sendMail(config, index, response)
 	}
 
