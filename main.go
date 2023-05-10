@@ -18,7 +18,6 @@ func crawl(mutex *sync.Mutex, wg *sync.WaitGroup, config Config, index int) {
 	mutex.Unlock()
 
 	// get status code of site url
-	log.Printf("[%s] checking has started\n", config.Sites[index].Site)
 	response, err := http.Get(config.Sites[index].Site)
 	if err != nil {
 		log.Printf("Failed to fetch site url: %s\n", config.Sites[index].Site)
