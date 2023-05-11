@@ -7,6 +7,7 @@ import (
 	"net/smtp"
 	"net/url"
 	"strings"
+	"time"
 )
 
 func sendMail(config Config, index int, response *http.Response) {
@@ -17,11 +18,16 @@ func sendMail(config Config, index int, response *http.Response) {
 		return
 	}
 
+	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";"
 	to := mergeToEmails(config, index)
 	auth := smtp.PlainAuth("", config.SmtpUser, config.SmtpPassword, "smtp.gmail.com")
-	msg := fmt.Sprintf("Site: %s<br>Status: %s", config.Sites[index].Site, response.Status)
-	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";"
 
+	msg := fmt.Sprintf(
+		"Site: %s<br>Status: %s<br>Timestamp: %s",
+		config.Sites[index].Site,
+		response.Status,
+		time.Now().Format("January 2, 3:04 PM"),
+	)
 	payload := fmt.Sprintf(
 		"From: %s\nTo: %s\nSubject: %s\n%s\n\n%s",
 		fmt.Sprintf("DF DevOps <%s>", config.SmtpUser),
