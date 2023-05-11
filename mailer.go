@@ -21,7 +21,6 @@ func sendMail(config Config, index int, response *http.Response) {
 	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";"
 	to := mergeToEmails(config, index)
 	auth := smtp.PlainAuth("", config.SmtpUser, config.SmtpPassword, "smtp.gmail.com")
-
 	msg := fmt.Sprintf(
 		"Site: %s<br>Status: %s<br>Timestamp: %s",
 		config.Sites[index].Site,
@@ -36,6 +35,9 @@ func sendMail(config Config, index int, response *http.Response) {
 		mime,
 		msg,
 	)
+
+	log.Printf("Sending email for site=%s\n", config.Sites[index].Site)
+	log.Printf("Email recipients: %s\n", strings.Join(to, ","))
 	smtp.SendMail(
 		"smtp.gmail.com:587",
 		auth,
