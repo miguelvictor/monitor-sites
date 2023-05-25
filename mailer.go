@@ -3,14 +3,13 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"net/smtp"
 	"net/url"
 	"strings"
 	"time"
 )
 
-func sendMail(config Config, index int, response *http.Response) {
+func sendMail(config Config, index int, status string) {
 	parsedUrl, err := url.Parse(config.Sites[index].Site)
 	if err != nil {
 		log.Printf("Invalid site url: %s\n", config.Sites[index].Site)
@@ -24,7 +23,7 @@ func sendMail(config Config, index int, response *http.Response) {
 	msg := fmt.Sprintf(
 		"Site: %s<br>Status: %s<br>Timestamp: %s",
 		config.Sites[index].Site,
-		response.Status,
+		status,
 		time.Now().Format("January 2, 3:04 PM"),
 	)
 	payload := fmt.Sprintf(

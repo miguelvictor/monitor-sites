@@ -17,23 +17,24 @@ func crawl(mutex *sync.Mutex, wg *sync.WaitGroup, config Config, index int) {
 	wg.Add(1)
 	mutex.Unlock()
 
+	// lock the wait group to prevent other jobs from being added
+	defer mutex.Unlock()
+	defer wg.Done()
+	defer mutex.Lock()
+
 	// get status code of site url
 	response, err := http.Get(config.Sites[index].Site)
 	if err != nil {
-		log.Printf("Failed to fetch site url: %s\n", config.Sites[index].Site)
 		log.Println(err)
+		sendMail(config, index, "Site Unreachable")
+		return
 	}
 
 	// send an email if status code is 200
 	if response.StatusCode != 200 {
 		log.Printf("[%s]: %s\n", config.Sites[index].Site, response.Status)
-		sendMail(config, index, response)
+		sendMail(config, index, response.Status)
 	}
-
-	// remove job from the wait group
-	mutex.Lock()
-	wg.Done()
-	mutex.Unlock()
 }
 
 func main() {
