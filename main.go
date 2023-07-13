@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -30,10 +32,30 @@ func crawl(mutex *sync.Mutex, wg *sync.WaitGroup, config Config, index int) {
 		return
 	}
 
-	// send an email if status code is 200
+	// send an email if status code is not 200
 	if response.StatusCode != 200 {
 		log.Printf("[%s]: %s\n", config.Sites[index].Site, response.Status)
 		sendMail(config, index, response.Status)
+	}
+
+	// check if some sensitive files are exposed
+	paths := [3]string{".env", "php.ini", "wp-config.php"}
+	for i := 0; i < len(paths); i++ {
+		// visit site with added path
+		response, err := http.Get(config.Sites[index].Site + "/" + paths[i])
+		if err != nil || response.StatusCode != 200 {
+			continue
+		}
+
+		// read response body
+		body, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			log.Printf("Failed to read response body: %s\n", err)
+			continue
+		}
+		if len(string(body)) != 0 {
+			sendMail(config, index, fmt.Sprintf("Exposed file '%s'", paths[i]))
+		}
 	}
 }
 
