@@ -6,11 +6,13 @@ import (
 )
 
 type Config struct {
-	SmtpUser     string   `json:"smtpUser"`
-	SmtpPassword string   `json:"smtpPassword"`
-	Emails       []string `json:"emails"`
-	CronExp      string   `json:"cron"`
-	Sites        []struct {
+	SmtpUser              string   `json:"smtpUser"`
+	SmtpPassword          string   `json:"smtpPassword"`
+	Emails                []string `json:"emails"`
+	HealthCheckCronExp    string   `json:"healthCheckCron"`
+	SensitiveFilesCronExp string   `json:"sensitiveFilesCron"`
+	SlackWebhook          string   `json:"slackWebhook"`
+	Sites                 []struct {
 		Site   string   `json:"site"`
 		Emails []string `json:"emails"`
 	} `json:"sites"`

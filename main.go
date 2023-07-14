@@ -1,10 +1,7 @@
 package main
 
 import (
-	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"sync"
@@ -12,52 +9,6 @@ import (
 
 	"github.com/robfig/cron/v3"
 )
-
-func crawl(mutex *sync.Mutex, wg *sync.WaitGroup, config Config, index int) {
-	// add job to the wait group
-	mutex.Lock()
-	wg.Add(1)
-	mutex.Unlock()
-
-	// lock the wait group to prevent other jobs from being added
-	defer mutex.Unlock()
-	defer wg.Done()
-	defer mutex.Lock()
-
-	// get status code of site url
-	response, err := http.Get(config.Sites[index].Site)
-	if err != nil {
-		log.Println(err)
-		sendMail(config, index, "Site Unreachable")
-		return
-	}
-
-	// send an email if status code is not 200
-	if response.StatusCode != 200 {
-		log.Printf("[%s]: %s\n", config.Sites[index].Site, response.Status)
-		sendMail(config, index, response.Status)
-	}
-
-	// check if some sensitive files are exposed
-	paths := [3]string{".env", "php.ini", "wp-config.php"}
-	for i := 0; i < len(paths); i++ {
-		// visit site with added path
-		response, err := http.Get(config.Sites[index].Site + "/" + paths[i])
-		if err != nil || response.StatusCode != 200 {
-			continue
-		}
-
-		// read response body
-		body, err := ioutil.ReadAll(response.Body)
-		if err != nil {
-			log.Printf("Failed to read response body: %s\n", err)
-			continue
-		}
-		if len(string(body)) != 0 {
-			sendMail(config, index, fmt.Sprintf("Exposed file '%s'", paths[i]))
-		}
-	}
-}
 
 func main() {
 	// parse config json file
@@ -72,12 +23,18 @@ func main() {
 	// create a wait group to wait for the running jobs to finish
 	// we also create a mutex to lock the wait group
 	var wg sync.WaitGroup
-	var mutex sync.Mutex
 
-	// schedule a job to run every minute
-	c.AddFunc(config.CronExp, func() {
+	// schedule a job to check the health of the sites
+	c.AddFunc(config.HealthCheckCronExp, func() {
 		for i := 0; i < len(config.Sites); i++ {
-			go crawl(&mutex, &wg, config, i)
+			go crawl(&wg, config, i)
+		}
+	})
+
+	// schedule a job to check the potential leaked sensitive files of the website
+	c.AddFunc(config.SensitiveFilesCronExp, func() {
+		for i := 0; i < len(config.Sites); i++ {
+			go checkSensitiveFiles(&wg, config, i)
 		}
 	})
 
@@ -95,8 +52,6 @@ func main() {
 
 	// wait for the running jobs to stop
 	log.Println("waiting for running jobs to finish...")
-	mutex.Lock()
 	wg.Wait()
-	mutex.Unlock()
 	log.Println("done")
 }
