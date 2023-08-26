@@ -5,14 +5,9 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"sync"
 )
 
-func crawl(wg *sync.WaitGroup, config Config, index int) {
-	// add job to wait group
-	wg.Add(1)
-	defer wg.Done()
-
+func crawl(config Config, index int) {
 	// get status code of site url
 	response, err := http.Get(config.Sites[index].Site)
 	if err != nil {
@@ -20,6 +15,7 @@ func crawl(wg *sync.WaitGroup, config Config, index int) {
 		sendMail(config, index, "Site Unreachable")
 		return
 	}
+	defer response.Body.Close()
 
 	// send an email if status code is not 200
 	if response.StatusCode != 200 {
@@ -28,11 +24,7 @@ func crawl(wg *sync.WaitGroup, config Config, index int) {
 	}
 }
 
-func checkSensitiveFiles(wg *sync.WaitGroup, config Config, index int) {
-	// add job to wait group
-	wg.Add(1)
-	defer wg.Done()
-
+func checkSensitiveFiles(config Config, index int) {
 	// get http client
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -45,16 +37,14 @@ func checkSensitiveFiles(wg *sync.WaitGroup, config Config, index int) {
 	for i := 0; i < len(paths); i++ {
 		// visit site with added path
 		response, err := client.Get(config.Sites[index].Site + "/" + paths[i])
-		if err != nil || response.StatusCode >= 300 {
-			response.Body.Close()
+		if err != nil {
+			log.Println(err)
 			continue
 		}
-
-		// close response body
+		defer response.Body.Close()
 
 		// read response body and close it afterwards
 		body, err := io.ReadAll(response.Body)
-		response.Body.Close()
 
 		// check response for errors
 		if err != nil {

@@ -11,6 +11,9 @@ import (
 )
 
 func main() {
+	// set default log output to stdout
+	log.SetOutput(os.Stdout)
+
 	// parse config json file
 	config, err := getSitesConfig()
 	if err != nil {
@@ -27,14 +30,22 @@ func main() {
 	// schedule a job to check the health of the sites
 	c.AddFunc(config.HealthCheckCronExp, func() {
 		for i := 0; i < len(config.Sites); i++ {
-			go crawl(&wg, config, i)
+			wg.Add(1)
+			go func(index int) {
+				defer wg.Done()
+				crawl(config, index)
+			}(i)
 		}
 	})
 
 	// schedule a job to check the potential leaked sensitive files of the website
 	c.AddFunc(config.SensitiveFilesCronExp, func() {
 		for i := 0; i < len(config.Sites); i++ {
-			go checkSensitiveFiles(&wg, config, i)
+			wg.Add(1)
+			go func(index int) {
+				defer wg.Done()
+				checkSensitiveFiles(config, index)
+			}(i)
 		}
 	})
 
