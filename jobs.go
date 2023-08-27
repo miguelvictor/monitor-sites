@@ -43,6 +43,11 @@ func checkSensitiveFiles(config Config, index int) {
 		}
 		defer response.Body.Close()
 
+		// do nothing if status code is not 2xx
+		if response.StatusCode >= 300 {
+			continue
+		}
+
 		// read response body and close it afterwards
 		body, err := io.ReadAll(response.Body)
 
