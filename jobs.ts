@@ -8,23 +8,19 @@ import { notifyEmails, notifySlack } from "./notifiers"
 export async function runHealthCheckJob() {
   const config = await getConfig()
   const checkPath = async (url: string) => {
-    try {
-      const response = await fetch(url)
-      if (!response.ok) {
-        console.error(
-          `[runHealthCheckJob] ${url} is down: ${response.status} - ${response.statusText}`
-        )
-        return notifyEmails(url, `${response.status} - ${response.statusText}`)
-      }
-    } catch (e) {
-      const reason = (e as any)?.message || "Unknown Error"
-      console.error(`[runHealthCheckJob] ${url} is unreachable: ${reason}`)
-      return notifyEmails(url, `Site Unreachable (${reason})`)
+    const response = await fetch(url)
+    if (!response.ok) {
+      console.error(
+        `[runHealthCheckJob] ${url} is down: ${response.status} - ${response.statusText}`
+      )
+      return notifyEmails(url, `${response.status} - ${response.statusText}`)
     }
   }
 
   // perform health check for each site concurrently
-  await Promise.allSettled(config.sites.map(({ site }) => checkPath(site)))
+  await Promise.allSettled(
+    config.sites.map(({ site }) => checkPath(site).catch(console.error))
+  )
 }
 
 /**
@@ -40,7 +36,9 @@ export async function runCheckSensitiveFilesJob() {
     const body = await response.text()
     const title = `Exposed file: ${url}`
     const status = `${response.status} ${response.statusText}`
-    console.error(`[runCheckSensitiveFilesJob] exposed file: ${url} - ${status}`)
+    console.error(
+      `[runCheckSensitiveFilesJob] exposed file: ${url} - ${status}`
+    )
 
     return notifySlack(
       title,

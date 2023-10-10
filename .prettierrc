@@ -1,5 +1,4 @@
 {
   "semi": false,
-  "arrowParens": "avoid",
-  "printWidth": 100
+  "arrowParens": "avoid"
 }
