@@ -1,5 +1,5 @@
-import cron from "node-cron";
-import { runCheckSensitiveFilesJob, runHealthCheckJob } from "./jobs";
+import cron from "node-cron"
+import { runCheckSensitiveFilesJob, runHealthCheckJob } from "./jobs"
 
-cron.schedule("*/3 * * * *", runHealthCheckJob);
-cron.schedule("0 * * * *", runCheckSensitiveFilesJob);
+cron.schedule("*/3 * * * *", runHealthCheckJob)
+cron.schedule("* * * * *", runCheckSensitiveFilesJob)
