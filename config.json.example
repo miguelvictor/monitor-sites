@@ -1,8 +1,5 @@
 {
-  "smtpUser": "youremail@gmail.com",
-  "smtpPassword": "yourapppassword",
   "emails": ["theemailwherethealertswillbesent@somewhere.com"],
-  "cron": "*/3 * * * *",
   "sites": [
     {
       "site": "https://www.google.com/",

@@ -1,0 +1,19 @@
+{
+  "name": "monitor-sites",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/node-cron": "^3.0.9",
+    "@types/nodemailer": "^6.4.11",
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "dayjs": "^1.11.10",
+    "node-cron": "^3.0.2",
+    "nodemailer": "^6.9.6",
+    "zod": "^3.22.4"
+  }
+}
